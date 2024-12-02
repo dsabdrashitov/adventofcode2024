@@ -12,6 +12,8 @@ const (
 	inputFile = "input.txt"
 	// inputFile = "sample.txt"
 	// inputFile = "test.txt"
+
+	inf = 2147483647
 )
 
 func abs(a int) int {
@@ -33,68 +35,35 @@ func compare(a int, b int) int {
 	}
 }
 
-func safeNormal(a []int, d int) bool {
-	for i := 0; i+1 < len(a); i++ {
-		diff := (a[i+1] - a[i]) * d
-		if diff < 1 || diff > 3 {
-			return false
-		}
-	}
-	return true
-}
-
-func safeStupid(a []int, d int) bool {
-	if safeNormal(a, d) {
-		return true
-	}
-	reduced := make([]int, len(a)-1)
-	for i := 0; i < len(a); i++ {
-		copy(reduced[0:i], a[0:i])
-		copy(reduced[i:], a[i+1:])
-		if safeNormal(reduced, d) {
-			return true
-		}
-	}
-	return false
-}
-
 func safe(a []int, d int) bool {
-	lowest := a[0]
-	for _, ai := range a {
-		if compare(lowest, ai) == d {
-			lowest = ai
-		}
-	}
 	pd := true
-	ld := lowest - d
+	ld := inf
 	ps := false
 	ls := 0
+	pg := false
+	lg := 0
 	for i := 0; i < len(a); i++ {
-		npd := pd && compare(a[i], ld) == d && abs(a[i]-ld) >= 1 && abs(a[i]-ld) <= 3
+		npd := pd && (ld == inf || (compare(a[i], ld) == d && abs(a[i]-ld) >= 1 && abs(a[i]-ld) <= 3))
 		nld := a[i]
 		nps := pd
 		nls := ld
-		if ps && compare(a[i], ls) == d && abs(a[i]-ls) >= 1 && abs(a[i]-ls) <= 3 {
-			if !nps || compare(nls, a[i]) == d {
-				nps = true
-				nls = a[i]
-			}
-		}
+		npg := ((pg && (lg == inf || (compare(a[i], lg) == d && abs(a[i]-lg) >= 1 && abs(a[i]-lg) <= 3))) ||
+			(ps && (ls == inf || (compare(a[i], ls) == d && abs(a[i]-ls) >= 1 && abs(a[i]-ls) <= 3))))
+		nlg := a[i]
 		pd = npd
 		ld = nld
 		ps = nps
 		ls = nls
+		pg = npg
+		lg = nlg
 	}
-	return pd || ps
+	return pd || ps || pg
 }
 
 func solve(a [][]int) int {
 	result := 0
 	for _, ai := range a {
-		if safeStupid(ai, 1) || safeStupid(ai, -1) {
-			if !(safe(ai, 1) || safe(ai, -1)) {
-				fmt.Println(ai)
-			}
+		if safe(ai, 1) || safe(ai, -1) {
 			result += 1
 		}
 	}
