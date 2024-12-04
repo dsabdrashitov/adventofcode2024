@@ -12,9 +12,11 @@ func Abs[T constraints.Integer](x T) T {
 	}
 }
 
-func check[T any](val T, err error) T {
-	if err != nil {
-		panic(err)
+func Gcd[T constraints.Integer](a T, b T) T {
+	for a > 0 {
+		tmp := b % a
+		b = a
+		a = tmp
 	}
-	return val
+	return b
 }

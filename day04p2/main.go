@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 )
 
 const (
@@ -69,14 +67,7 @@ func solve(s []string) int {
 }
 
 func main() {
-	file := check(os.Open(inputFile))
-	defer func() { check(0, file.Close()) }()
-	a := make([]string, 0)
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		a = append(a, scanner.Text())
-	}
+	a := ReadLines(inputFile)
 	answer := solve(a)
 	fmt.Println(answer)
 }
