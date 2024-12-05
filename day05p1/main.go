@@ -25,21 +25,12 @@ func solve(rulesList [][]int, pages [][]int) int {
 			maxpage = max(maxpage, p)
 		}
 	}
-	rules := make([][]bool, maxpage+1)
+	rules := make([][]int, maxpage+1)
 	for i := range rules {
-		rules[i] = make([]bool, maxpage+1)
+		rules[i] = make([]int, 0)
 	}
 	for _, rule := range rulesList {
-		rules[rule[0]][rule[1]] = true
-	}
-	for k := 0; k < len(rules); k++ {
-		for i := 0; i < len(rules); i++ {
-			for j := 0; j < len(rules); j++ {
-				if rules[i][k] && rules[k][j] {
-					rules[i][j] = true
-				}
-			}
-		}
+		rules[rule[1]] = append(rules[rule[1]], rule[0])
 	}
 	for _, page := range pages {
 		if good(rules, page) {
@@ -49,11 +40,19 @@ func solve(rulesList [][]int, pages [][]int) int {
 	return result
 }
 
-func good(rules [][]bool, page []int) bool {
-	for i := 0; i+1 < len(page); i++ {
-		if rules[page[i+1]][page[i]] {
-			return false
+func good(rules [][]int, page []int) bool {
+	has := make(map[int]bool)
+	for _, p := range page {
+		has[p] = true
+	}
+	hasLeft := make(map[int]bool)
+	for i := 0; i < len(page); i++ {
+		for _, rule := range rules[page[i]] {
+			if has[rule] && !hasLeft[rule] {
+				return false
+			}
 		}
+		hasLeft[page[i]] = true
 	}
 	return true
 }
