@@ -6,21 +6,21 @@ type Point struct {
 }
 
 var DIR4 = []Point{
-	Point{-1, 0},
-	Point{0, 1},
-	Point{1, 0},
-	Point{0, -1},
+	{-1, 0},
+	{0, 1},
+	{1, 0},
+	{0, -1},
 }
 
 var DIR8 = []Point{
-	Point{-1, 0},
-	Point{-1, 1},
-	Point{0, 1},
-	Point{1, 1},
-	Point{1, 0},
-	Point{1, -1},
-	Point{0, -1},
-	Point{-1, -1},
+	{-1, 0},
+	{-1, 1},
+	{0, 1},
+	{1, 1},
+	{1, 0},
+	{1, -1},
+	{0, -1},
+	{-1, -1},
 }
 
 func (t Point) Add(p Point) Point {

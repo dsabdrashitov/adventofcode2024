@@ -3,14 +3,16 @@ package main
 import (
 	"bufio"
 	"os"
+
+	. "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 )
 
 func ReadWhole(filename string) string {
-	return string(Must(os.ReadFile(inputFile)))
+	return string(Must(os.ReadFile(filename)))
 }
 
 func ReadLines(filename string) []string {
-	file := Must(os.Open(inputFile))
+	file := Must(os.Open(filename))
 	defer func() { Must(false, file.Close()) }()
 	result := make([]string, 0)
 	scanner := bufio.NewScanner(file)

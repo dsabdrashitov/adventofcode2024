@@ -7,14 +7,14 @@ import (
 )
 
 type ParsingResult struct {
-	str  string
-	list []ParsingResult
+	S string
+	L []ParsingResult
 }
 
 // Parsers
 
 type Parser interface {
-	Regexp() string
+	getRegexpString() string
 	Parse(s string) ParsingResult
 }
 
@@ -27,10 +27,10 @@ func (t literalParser) Parse(s string) ParsingResult {
 	if !t.regexp.MatchString(s) {
 		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
 	}
-	return ParsingResult{str: s}
+	return ParsingResult{S: s}
 }
 
-func (t literalParser) Regexp() string {
+func (t literalParser) getRegexpString() string {
 	return t.regexpString
 }
 
@@ -43,10 +43,10 @@ func (t regexpParser) Parse(s string) ParsingResult {
 	if !t.regexp.MatchString(s) {
 		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
 	}
-	return ParsingResult{str: s}
+	return ParsingResult{S: s}
 }
 
-func (t regexpParser) Regexp() string {
+func (t regexpParser) getRegexpString() string {
 	return t.regexpString
 }
 
@@ -57,7 +57,7 @@ type sequenceParser struct {
 }
 
 func (t sequenceParser) Parse(s string) ParsingResult {
-	res := ParsingResult{list: make([]ParsingResult, 0)}
+	res := ParsingResult{L: make([]ParsingResult, 0)}
 	for i, p := range t.parts {
 		loc := p.FindStringIndex(s)
 		if loc == nil || loc[0] != 0 {
@@ -67,14 +67,14 @@ func (t sequenceParser) Parse(s string) ParsingResult {
 		case literalParser:
 			// nothing
 		default:
-			res.list = append(res.list, t.children[i].Parse(s[:loc[1]]))
+			res.L = append(res.L, t.children[i].Parse(s[:loc[1]]))
 		}
 		s = s[loc[1]:]
 	}
 	return res
 }
 
-func (t sequenceParser) Regexp() string {
+func (t sequenceParser) getRegexpString() string {
 	return t.regexpString
 }
 
@@ -93,7 +93,7 @@ func (t switchParser) Parse(s string) ParsingResult {
 	panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
 }
 
-func (t switchParser) Regexp() string {
+func (t switchParser) getRegexpString() string {
 	return t.regexpString
 }
 
@@ -105,18 +105,18 @@ type listParser struct {
 }
 
 func (t listParser) Parse(s string) ParsingResult {
-	res := ParsingResult{list: make([]ParsingResult, 0)}
+	res := ParsingResult{L: make([]ParsingResult, 0)}
 	for s != "" {
 		loc := t.part.FindStringIndex(s)
 		if loc == nil || loc[0] != 0 {
-			panic(fmt.Sprintf("%v part not found", len(res.list)))
+			panic(fmt.Sprintf("%v part not found", len(res.L)))
 		}
-		res.list = append(res.list, t.parser.Parse(s[:loc[1]]))
+		res.L = append(res.L, t.parser.Parse(s[:loc[1]]))
 		s = s[loc[1]:]
 		if s != "" {
 			loc := t.separator.FindStringIndex(s)
 			if loc == nil || loc[0] != 0 {
-				panic(fmt.Sprintf("%v separator not found", len(res.list)))
+				panic(fmt.Sprintf("%v separator not found", len(res.L)))
 			}
 			s = s[loc[1]:]
 		}
@@ -124,71 +124,95 @@ func (t listParser) Parse(s string) ParsingResult {
 	return res
 }
 
-func (t listParser) Regexp() string {
+func (t listParser) getRegexpString() string {
 	return t.regexpString
 }
 
 // Elements
 
-type parsingElement interface {
+type ParsingElement interface {
 	Complie() Parser
 }
 
-type Literal struct {
+func Literal(unescaped string) ParsingElement {
+	return literalElement{unescaped}
+}
+
+type literalElement struct {
 	unescaped string
 }
 
-func (t Literal) Complie() Parser {
+func (t literalElement) Complie() Parser {
 	parser := literalParser{}
 	parser.regexpString = regexp.QuoteMeta(t.unescaped)
 	parser.regexp = regexp.MustCompile(parser.regexpString)
 	return parser
 }
 
-type Token struct {
+func Token(unescaped string) ParsingElement {
+	return tokenElement{unescaped}
+}
+
+type tokenElement struct {
 	unescaped string
 }
 
-func (t Token) Complie() Parser {
+func (t tokenElement) Complie() Parser {
 	parser := regexpParser{}
 	parser.regexpString = regexp.QuoteMeta(t.unescaped)
 	parser.regexp = regexp.MustCompile(parser.regexpString)
 	return parser
 }
 
-type Regexp struct {
+func Regexp(escaped string) ParsingElement {
+	return regexpElement{escaped}
+}
+
+type regexpElement struct {
 	escaped string
 }
 
-func (t Regexp) Complie() Parser {
+func (t regexpElement) Complie() Parser {
 	parser := regexpParser{}
 	parser.regexpString = t.escaped
 	parser.regexp = regexp.MustCompile(parser.regexpString)
 	return parser
 }
 
-type Number struct{}
-
-func (t Number) Complie() Parser {
-	return Regexp{`[-+.e\d]+`}.Complie()
+func Number() ParsingElement {
+	return numberElement{}
 }
 
-type Word struct{}
+type numberElement struct{}
 
-func (t Word) Complie() Parser {
-	return Regexp{`[\w]+`}.Complie()
+func (t numberElement) Complie() Parser {
+	return regexpElement{`[-+.e\d]+`}.Complie()
 }
 
-type Sequence []parsingElement
+func Word() ParsingElement {
+	return wordElement{}
+}
 
-func (t Sequence) Complie() Parser {
+type wordElement struct{}
+
+func (t wordElement) Complie() Parser {
+	return regexpElement{`[\w]+`}.Complie()
+}
+
+func Sequence(c ...ParsingElement) ParsingElement {
+	return sequenceElement(c)
+}
+
+type sequenceElement []ParsingElement
+
+func (t sequenceElement) Complie() Parser {
 	parser := sequenceParser{}
 	var b strings.Builder
 	parser.parts = make([]*regexp.Regexp, len(t))
 	parser.children = make([]Parser, len(t))
 	for i, e := range t {
 		parser.children[i] = e.Complie()
-		cps := parser.children[i].Regexp()
+		cps := parser.children[i].getRegexpString()
 		b.WriteString(cps)
 		parser.parts[i] = regexp.MustCompile(cps)
 	}
@@ -196,16 +220,20 @@ func (t Sequence) Complie() Parser {
 	return parser
 }
 
-type Switch []parsingElement
+func Switch(c ...ParsingElement) ParsingElement {
+	return switchElement(c)
+}
 
-func (t Switch) Complie() Parser {
+type switchElement []ParsingElement
+
+func (t switchElement) Complie() Parser {
 	parser := switchParser{}
 	var b strings.Builder
 	parser.parts = make([]*regexp.Regexp, len(t))
 	parser.children = make([]Parser, len(t))
 	for i, e := range t {
 		parser.children[i] = e.Complie()
-		cps := parser.children[i].Regexp()
+		cps := parser.children[i].getRegexpString()
 		if i > 0 {
 			b.WriteString(`|`)
 		}
@@ -218,15 +246,19 @@ func (t Switch) Complie() Parser {
 	return parser
 }
 
-type List struct {
-	element            parsingElement
+func List(element ParsingElement, unescapedSeparator string) ParsingElement {
+	return listElement{element, unescapedSeparator}
+}
+
+type listElement struct {
+	element            ParsingElement
 	unescapedSeparator string
 }
 
-func (t List) Complie() Parser {
+func (t listElement) Complie() Parser {
 	parser := listParser{}
 	parser.parser = t.element.Complie()
-	cps := parser.parser.Regexp()
+	cps := parser.parser.getRegexpString()
 	parser.part = regexp.MustCompile(cps)
 	sps := regexp.QuoteMeta(t.unescapedSeparator)
 	parser.separator = regexp.MustCompile(sps)

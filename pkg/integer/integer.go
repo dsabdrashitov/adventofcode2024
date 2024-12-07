@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 
+	. "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"golang.org/x/exp/constraints"
 )
 
