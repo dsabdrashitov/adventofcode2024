@@ -75,7 +75,7 @@ func (t iIntParser) Parse(s string) ParsingResult {
 }
 
 func (t iIntParser) Regexp() string {
-	return `[\d]+`
+	return `\-?[\d]+`
 }
 
 type iSequenceParser struct {
