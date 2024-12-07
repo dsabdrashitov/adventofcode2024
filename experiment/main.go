@@ -13,8 +13,9 @@ const (
 func main() {
 	inp := "zero := [1 -> (8, 1), 2 -> (), 3 -> (9, 10, 11), 4 -> (13)]"
 
-	rp := Sequence{IntNumber{}, Literal{` -> \(`}, Multiple{Sequence{IntNumber{}, Literal{`(, )?`}}, `*`}, Literal{`\)(, )?`}}
-	p := Sequence{Literal{`[a-z]+`}, Literal{` := \[`}, Multiple{rp, `*`}, Literal{`\]`}}
+	rpe := Sequence{IntNumber{}, Optional{`, `}}
+	rp := Sequence{IntNumber{}, Literal{` -> (`}, Multiple{rpe, `*`}, Literal{`)`}, Optional{`, `}}
+	p := Sequence{Regexp{`[a-z]+`}, Literal{` := [`}, Multiple{rp, `*`}, Literal{`]`}}
 	pc := p.Complie()
 
 	x := pc.Parse(inp)

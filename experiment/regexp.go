@@ -36,6 +36,38 @@ func (t iLiteralParser) Regexp() string {
 	return t.regexpString
 }
 
+type iOptionalParser struct {
+	regexpString string
+	regexp       *regexp.Regexp
+}
+
+func (t iOptionalParser) Parse(s string) ParsingResult {
+	if !t.regexp.MatchString(s) {
+		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
+	}
+	return ParsingResult{stringValue: s}
+}
+
+func (t iOptionalParser) Regexp() string {
+	return t.regexpString
+}
+
+type iRegexpParser struct {
+	regexpString string
+	regexp       *regexp.Regexp
+}
+
+func (t iRegexpParser) Parse(s string) ParsingResult {
+	if !t.regexp.MatchString(s) {
+		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
+	}
+	return ParsingResult{stringValue: s}
+}
+
+func (t iRegexpParser) Regexp() string {
+	return t.regexpString
+}
+
 type iIntParser struct{}
 
 func (t iIntParser) Parse(s string) ParsingResult {
@@ -118,11 +150,33 @@ type iParsingElement interface {
 }
 
 type Literal struct {
-	escaped string
+	unescaped string
 }
 
 func (t Literal) Complie() Parser {
 	parser := iLiteralParser{}
+	parser.regexpString = regexp.QuoteMeta(t.unescaped)
+	parser.regexp = regexp.MustCompile(parser.regexpString)
+	return parser
+}
+
+type Optional struct {
+	unescaped string
+}
+
+func (t Optional) Complie() Parser {
+	parser := iOptionalParser{}
+	parser.regexpString = `(` + regexp.QuoteMeta(t.unescaped) + `)?`
+	parser.regexp = regexp.MustCompile(parser.regexpString)
+	return parser
+}
+
+type Regexp struct {
+	escaped string
+}
+
+func (t Regexp) Complie() Parser {
+	parser := iRegexpParser{}
 	parser.regexpString = t.escaped
 	parser.regexp = regexp.MustCompile(parser.regexpString)
 	return parser
