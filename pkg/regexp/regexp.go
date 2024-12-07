@@ -246,13 +246,13 @@ func (t switchElement) Complie() Parser {
 	return parser
 }
 
-func List(element ParsingElement, unescapedSeparator string) ParsingElement {
-	return listElement{element, unescapedSeparator}
+func List(element ParsingElement, separator ParsingElement) ParsingElement {
+	return listElement{element, separator}
 }
 
 type listElement struct {
-	element            ParsingElement
-	unescapedSeparator string
+	element   ParsingElement
+	separator ParsingElement
 }
 
 func (t listElement) Complie() Parser {
@@ -260,7 +260,7 @@ func (t listElement) Complie() Parser {
 	parser.parser = t.element.Complie()
 	cps := parser.parser.getRegexpString()
 	parser.part = regexp.MustCompile(cps)
-	sps := regexp.QuoteMeta(t.unescapedSeparator)
+	sps := t.separator.Complie().getRegexpString()
 	parser.separator = regexp.MustCompile(sps)
 	parser.regexpString = `(` + cps + `(` + sps + cps + `)*(` + sps + `)?)?`
 	return parser

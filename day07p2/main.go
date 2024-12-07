@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	. "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	. "github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
-	// P "github.com/dsabdrashitov/adventofcode2024/pkg/regexp"
+	P "github.com/dsabdrashitov/adventofcode2024/pkg/regexp"
 )
 
 const (
@@ -72,14 +71,10 @@ func main() {
 	n := len(inp)
 	a := make([][]int, n)
 	b := make([]int, n)
-	for i := range n {
-		lr := strings.Split(inp[i], ": ")
-		b[i] = Must(strconv.Atoi(lr[0]))
-		rs := strings.Split(lr[1], " ")
-		a[i] = make([]int, len(rs))
-		for j := 0; j < len(a[i]); j++ {
-			a[i][j] = Must(strconv.Atoi(rs[j]))
-		}
+	for i, line := range inp {
+		p := P.ParseSliceInt(line)
+		b[i] = p[0]
+		a[i] = p[1:]
 		fmt.Println(b[i], a[i])
 	}
 	answer := solve(n, b, a)

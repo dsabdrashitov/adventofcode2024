@@ -11,8 +11,8 @@ import (
 func doExp() {
 	inp := "zero := [1 -> (8, 1), -2 -> (), 3 -> (9, 10, 11), -4 -> (13)]"
 
-	rp := P.Sequence(P.Number(), P.Literal(` -> (`), P.List(P.Number(), `, `), P.Literal(`)`))
-	p := P.Sequence(P.Word(), P.Literal(` := [`), P.List(rp, `, `), P.Token(`]`))
+	rp := P.Sequence(P.Number(), P.Literal(` -> (`), P.List(P.Number(), P.Literal(`, `)), P.Literal(`)`))
+	p := P.Sequence(P.Word(), P.Literal(` := [`), P.List(rp, P.Literal(`, `)), P.Token(`]`))
 	pc := p.Complie()
 
 	x := pc.Parse(inp)
