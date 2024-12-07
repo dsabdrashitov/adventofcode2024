@@ -13,9 +13,8 @@ const (
 func main() {
 	inp := "zero := [1 -> (8, 1), 2 -> (), 3 -> (9, 10, 11), 4 -> (13)]"
 
-	rpe := Sequence{IntNumber{}, Optional{`, `}}
-	rp := Sequence{IntNumber{}, Literal{` -> (`}, Multiple{rpe, `*`}, Literal{`)`}, Optional{`, `}}
-	p := Sequence{Regexp{`[a-z]+`}, Literal{` := [`}, Multiple{rp, `*`}, Literal{`]`}}
+	rp := Sequence{IntNumber{}, Literal{` -> (`}, List{IntNumber{}, `, `}, Literal{`)`}}
+	p := Sequence{Regexp{`[a-z]+`}, Literal{` := [`}, List{rp, `, `}, Literal{`]`}}
 	pc := p.Complie()
 
 	x := pc.Parse(inp)
@@ -25,7 +24,7 @@ func main() {
 		a := r.values[0].intValue
 		b := make([]int, len(r.values[2].values))
 		for j, br := range r.values[2].values {
-			b[j] = br.values[0].intValue
+			b[j] = br.intValue
 		}
 		fmt.Println(a)
 		fmt.Println(b)

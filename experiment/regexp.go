@@ -143,6 +143,37 @@ func (t iMultipleParser) Regexp() string {
 	return t.regexpString
 }
 
+type iListParser struct {
+	regexpString string
+	part         *regexp.Regexp
+	separator    *regexp.Regexp
+	parser       Parser
+}
+
+func (t iListParser) Parse(s string) ParsingResult {
+	res := ParsingResult{values: make([]ParsingResult, 0)}
+	for s != "" {
+		loc := t.part.FindStringIndex(s)
+		if loc == nil || loc[0] != 0 {
+			panic(fmt.Sprintf("%v part not found", len(res.values)))
+		}
+		res.values = append(res.values, t.parser.Parse(s[:loc[1]]))
+		s = s[loc[1]:]
+		if s != "" {
+			loc := t.separator.FindStringIndex(s)
+			if loc == nil || loc[0] != 0 {
+				panic(fmt.Sprintf("%v separator not found", len(res.values)))
+			}
+			s = s[loc[1]:]
+		}
+	}
+	return res
+}
+
+func (t iListParser) Regexp() string {
+	return t.regexpString
+}
+
 // Elements
 
 type iParsingElement interface {
@@ -238,5 +269,21 @@ func (t Multiple) Complie() Parser {
 	cps := parser.parser.Regexp()
 	parser.part = regexp.MustCompile(cps)
 	parser.regexpString = `(` + cps + `)` + t.reSuffix
+	return parser
+}
+
+type List struct {
+	element            iParsingElement
+	unescapedSeparator string
+}
+
+func (t List) Complie() Parser {
+	parser := iListParser{}
+	parser.parser = t.element.Complie()
+	cps := parser.parser.Regexp()
+	parser.part = regexp.MustCompile(cps)
+	sps := regexp.QuoteMeta(t.unescapedSeparator)
+	parser.separator = regexp.MustCompile(sps)
+	parser.regexpString = `(` + cps + `(` + sps + cps + `)*(` + sps + `)?)?`
 	return parser
 }
