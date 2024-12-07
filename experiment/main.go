@@ -15,7 +15,7 @@ func main() {
 
 	rp := Sequence{IntNumber{}, Literal{` -> \(`}, Multiple{Sequence{IntNumber{}, Literal{`(, )?`}}, `*`}, Literal{`\)(, )?`}}
 	p := Sequence{Literal{`[a-z]+`}, Literal{` := \[`}, Multiple{rp, `*`}, Literal{`\]`}}
-	pc := p.Complie(nil)
+	pc := p.Complie()
 
 	x := pc.Parse(inp)
 

@@ -46,19 +46,6 @@ func (t iIntParser) Regexp() string {
 	return `[\d]+`
 }
 
-type iVariableParser struct {
-	name   string
-	parser Parser
-}
-
-func (t iVariableParser) Parse(s string) ParsingResult {
-	return ParsingResult{stringValue: t.name, values: []ParsingResult{t.parser.Parse(s)}}
-}
-
-func (t iVariableParser) Regexp() string {
-	return t.parser.Regexp()
-}
-
 type iSequenceParser struct {
 	regexpString string
 	parts        []*regexp.Regexp
@@ -127,14 +114,14 @@ func (t iMultipleParser) Regexp() string {
 // Elements
 
 type iParsingElement interface {
-	Complie(rules map[string]Parser) Parser
+	Complie() Parser
 }
 
 type Literal struct {
 	escaped string
 }
 
-func (t Literal) Complie(rules map[string]Parser) Parser {
+func (t Literal) Complie() Parser {
 	parser := iLiteralParser{}
 	parser.regexpString = t.escaped
 	parser.regexp = regexp.MustCompile(parser.regexpString)
@@ -143,30 +130,19 @@ func (t Literal) Complie(rules map[string]Parser) Parser {
 
 type IntNumber struct{}
 
-func (t IntNumber) Complie(rules map[string]Parser) Parser {
+func (t IntNumber) Complie() Parser {
 	return iIntParser{}
-}
-
-type Variable struct {
-	name string
-}
-
-func (t Variable) Complie(rules map[string]Parser) Parser {
-	parser := iVariableParser{}
-	parser.name = t.name
-	parser.parser = rules[t.name]
-	return parser
 }
 
 type Sequence []iParsingElement
 
-func (t Sequence) Complie(rules map[string]Parser) Parser {
+func (t Sequence) Complie() Parser {
 	parser := iSequenceParser{}
 	var b strings.Builder
 	parser.parts = make([]*regexp.Regexp, len(t))
 	parser.children = make([]Parser, len(t))
 	for i, e := range t {
-		parser.children[i] = e.Complie(rules)
+		parser.children[i] = e.Complie()
 		cps := parser.children[i].Regexp()
 		b.WriteString(cps)
 		parser.parts[i] = regexp.MustCompile(cps)
@@ -177,13 +153,13 @@ func (t Sequence) Complie(rules map[string]Parser) Parser {
 
 type Alternative []iParsingElement
 
-func (t Alternative) Complie(rules map[string]Parser) Parser {
+func (t Alternative) Complie() Parser {
 	parser := iAlternativeParser{}
 	var b strings.Builder
 	parser.parts = make([]*regexp.Regexp, len(t))
 	parser.children = make([]Parser, len(t))
 	for i, e := range t {
-		parser.children[i] = e.Complie(rules)
+		parser.children[i] = e.Complie()
 		cps := parser.children[i].Regexp()
 		if i > 0 {
 			b.WriteString(`|`)
@@ -202,9 +178,9 @@ type Multiple struct {
 	reSuffix string
 }
 
-func (t Multiple) Complie(rules map[string]Parser) Parser {
+func (t Multiple) Complie() Parser {
 	parser := iMultipleParser{}
-	parser.parser = t.element.Complie(rules)
+	parser.parser = t.element.Complie()
 	cps := parser.parser.Regexp()
 	parser.part = regexp.MustCompile(cps)
 	parser.regexpString = `(` + cps + `)` + t.reSuffix
