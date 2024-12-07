@@ -13,7 +13,7 @@ const (
 func main() {
 	inp := "zero := [1 -> (8, 1), -2 -> (), 3 -> (9, 10, 11), -4 -> (13)]"
 
-	rp := Sequence{IntNumber{}, Literal{` -> (`}, List{IntNumber{}, `, `}, Literal{`)`}}
+	rp := Sequence{Int{}, Literal{` -> (`}, List{Int{}, `, `}, Literal{`)`}}
 	p := Sequence{Regexp{`[a-z]+`}, Literal{` := [`}, List{rp, `, `}, Literal{`]`}}
 	pc := p.Complie()
 
