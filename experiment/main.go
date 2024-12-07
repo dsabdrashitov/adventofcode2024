@@ -13,18 +13,18 @@ const (
 func main() {
 	inp := "zero := [1 -> (8, 1), -2 -> (), 3 -> (9, 10, 11), -4 -> (13)]"
 
-	rp := Sequence{Int{}, Literal{` -> (`}, List{Int{}, `, `}, Literal{`)`}}
-	p := Sequence{Regexp{`[a-z]+`}, Literal{` := [`}, List{rp, `, `}, Literal{`]`}}
+	rp := Sequence{Number{}, Literal{` -> (`}, List{Number{}, `, `}, Literal{`)`}}
+	p := Sequence{Word{}, Literal{` := [`}, List{rp, `, `}, Literal{`]`}}
 	pc := p.Complie()
 
 	x := pc.Parse(inp)
 
-	fmt.Println(x.values[0])
-	for _, r := range x.values[2].values {
-		a := r.values[0].intValue
-		b := make([]int, len(r.values[2].values))
-		for j, br := range r.values[2].values {
-			b[j] = br.intValue
+	fmt.Println(x.list[0])
+	for _, r := range x.list[2].list {
+		a := Int(r.list[0].str)
+		b := make([]int, len(r.list[2].list))
+		for j, br := range r.list[2].list {
+			b[j] = Int(br.str)
 		}
 		fmt.Println(a)
 		fmt.Println(b)

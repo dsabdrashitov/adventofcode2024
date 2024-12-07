@@ -3,14 +3,12 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
 type ParsingResult struct {
-	stringValue string
-	intValue    int
-	values      []ParsingResult
+	str  string
+	list []ParsingResult
 }
 
 // Parsers
@@ -29,7 +27,7 @@ func (t literalParser) Parse(s string) ParsingResult {
 	if !t.regexp.MatchString(s) {
 		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
 	}
-	return ParsingResult{stringValue: s}
+	return ParsingResult{str: s}
 }
 
 func (t literalParser) Regexp() string {
@@ -45,21 +43,11 @@ func (t regexpParser) Parse(s string) ParsingResult {
 	if !t.regexp.MatchString(s) {
 		panic(fmt.Sprintf("mismatch regexp '%v'", t.regexpString))
 	}
-	return ParsingResult{stringValue: s}
+	return ParsingResult{str: s}
 }
 
 func (t regexpParser) Regexp() string {
 	return t.regexpString
-}
-
-type intParser struct{}
-
-func (t intParser) Parse(s string) ParsingResult {
-	return ParsingResult{intValue: Must(strconv.Atoi(s))}
-}
-
-func (t intParser) Regexp() string {
-	return `\-?[\d]+`
 }
 
 type sequenceParser struct {
@@ -69,13 +57,13 @@ type sequenceParser struct {
 }
 
 func (t sequenceParser) Parse(s string) ParsingResult {
-	res := ParsingResult{values: make([]ParsingResult, len(t.parts))}
+	res := ParsingResult{list: make([]ParsingResult, len(t.parts))}
 	for i, p := range t.parts {
 		loc := p.FindStringIndex(s)
 		if loc == nil || loc[0] != 0 {
 			panic(fmt.Sprintf("%v part not found for regexp '%v'", i, t.regexpString))
 		}
-		res.values[i] = t.children[i].Parse(s[:loc[1]])
+		res.list[i] = t.children[i].Parse(s[:loc[1]])
 		s = s[loc[1]:]
 	}
 	return res
@@ -112,18 +100,18 @@ type listParser struct {
 }
 
 func (t listParser) Parse(s string) ParsingResult {
-	res := ParsingResult{values: make([]ParsingResult, 0)}
+	res := ParsingResult{list: make([]ParsingResult, 0)}
 	for s != "" {
 		loc := t.part.FindStringIndex(s)
 		if loc == nil || loc[0] != 0 {
-			panic(fmt.Sprintf("%v part not found", len(res.values)))
+			panic(fmt.Sprintf("%v part not found", len(res.list)))
 		}
-		res.values = append(res.values, t.parser.Parse(s[:loc[1]]))
+		res.list = append(res.list, t.parser.Parse(s[:loc[1]]))
 		s = s[loc[1]:]
 		if s != "" {
 			loc := t.separator.FindStringIndex(s)
 			if loc == nil || loc[0] != 0 {
-				panic(fmt.Sprintf("%v separator not found", len(res.values)))
+				panic(fmt.Sprintf("%v separator not found", len(res.list)))
 			}
 			s = s[loc[1]:]
 		}
@@ -163,10 +151,16 @@ func (t Regexp) Complie() Parser {
 	return parser
 }
 
-type Int struct{}
+type Number struct{}
 
-func (t Int) Complie() Parser {
-	return intParser{}
+func (t Number) Complie() Parser {
+	return Regexp{`[-+.e\d]+`}.Complie()
+}
+
+type Word struct{}
+
+func (t Word) Complie() Parser {
+	return Regexp{`[\w]+`}.Complie()
 }
 
 type Sequence []parsingElement
