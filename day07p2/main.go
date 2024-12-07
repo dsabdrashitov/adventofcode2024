@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	. "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
+	. "github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
+	// P "github.com/dsabdrashitov/adventofcode2024/pkg/regexp"
 )
 
 const (

@@ -1,4 +1,4 @@
-package main
+package intpoint
 
 type Point struct {
 	x int
