@@ -57,13 +57,18 @@ type sequenceParser struct {
 }
 
 func (t sequenceParser) Parse(s string) ParsingResult {
-	res := ParsingResult{list: make([]ParsingResult, len(t.parts))}
+	res := ParsingResult{list: make([]ParsingResult, 0)}
 	for i, p := range t.parts {
 		loc := p.FindStringIndex(s)
 		if loc == nil || loc[0] != 0 {
 			panic(fmt.Sprintf("%v part not found for regexp '%v'", i, t.regexpString))
 		}
-		res.list[i] = t.children[i].Parse(s[:loc[1]])
+		switch t.children[i].(type) {
+		case literalParser:
+			// nothing
+		default:
+			res.list = append(res.list, t.children[i].Parse(s[:loc[1]]))
+		}
 		s = s[loc[1]:]
 	}
 	return res
@@ -135,6 +140,17 @@ type Literal struct {
 
 func (t Literal) Complie() Parser {
 	parser := literalParser{}
+	parser.regexpString = regexp.QuoteMeta(t.unescaped)
+	parser.regexp = regexp.MustCompile(parser.regexpString)
+	return parser
+}
+
+type Token struct {
+	unescaped string
+}
+
+func (t Token) Complie() Parser {
+	parser := regexpParser{}
 	parser.regexpString = regexp.QuoteMeta(t.unescaped)
 	parser.regexp = regexp.MustCompile(parser.regexpString)
 	return parser
