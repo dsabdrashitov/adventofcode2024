@@ -23,6 +23,10 @@ var DIR8 = []Point{
 	{-1, -1},
 }
 
+func New(x int, y int) Point {
+	return Point{x, y}
+}
+
 func (t Point) Add(p Point) Point {
 	return Point{t.X + p.X, t.Y + p.Y}
 }
@@ -33,6 +37,10 @@ func (t Point) Sub(p Point) Point {
 
 func (t Point) Mult(m int) Point {
 	return Point{t.X * m, t.Y * m}
+}
+
+func (t Point) InsideStrings(a []string) bool {
+	return PointInsideStrings(t, a)
 }
 
 func PointInside[T any](p Point, a [][]T) bool {
