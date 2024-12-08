@@ -1,8 +1,8 @@
 package intpoint
 
 type Point struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 var DIR4 = []Point{
@@ -24,44 +24,44 @@ var DIR8 = []Point{
 }
 
 func (t Point) Add(p Point) Point {
-	return Point{t.x + p.x, t.y + p.y}
+	return Point{t.X + p.X, t.Y + p.Y}
 }
 
 func (t Point) Sub(p Point) Point {
-	return Point{t.x - p.x, t.y - p.y}
+	return Point{t.X - p.X, t.Y - p.Y}
 }
 
 func (t Point) Mult(m int) Point {
-	return Point{t.x * m, t.y * m}
+	return Point{t.X * m, t.Y * m}
 }
 
 func PointInside[T any](p Point, a [][]T) bool {
-	if p.x < 0 {
+	if p.X < 0 {
 		return false
 	}
-	if p.x >= len(a) {
+	if p.X >= len(a) {
 		return false
 	}
-	if p.y < 0 {
+	if p.Y < 0 {
 		return false
 	}
-	if p.y >= len(a[p.x]) {
+	if p.Y >= len(a[p.X]) {
 		return false
 	}
 	return true
 }
 
 func PointInsideStrings(p Point, a []string) bool {
-	if p.x < 0 {
+	if p.X < 0 {
 		return false
 	}
-	if p.x >= len(a) {
+	if p.X >= len(a) {
 		return false
 	}
-	if p.y < 0 {
+	if p.Y < 0 {
 		return false
 	}
-	if p.y >= len(a[p.x]) {
+	if p.Y >= len(a[p.X]) {
 		return false
 	}
 	return true
