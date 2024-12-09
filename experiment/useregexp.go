@@ -8,7 +8,7 @@ import (
 	P "github.com/dsabdrashitov/adventofcode2024/pkg/regexp"
 )
 
-func doExp() {
+func DoRegexpExperiments() {
 	inp := "zero := [1 -> (8, 1), -2 -> (), 3 -> (9, 10, 11), -4 -> (13)]"
 
 	rp := P.Sequence(P.Number(), P.Literal(` -> (`), P.List(P.Number(), P.Literal(`, `)), P.Literal(`)`))
