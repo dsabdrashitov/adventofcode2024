@@ -89,7 +89,7 @@ func (t *SplayTree[K, V, A]) Delete(key K) {
 		return
 	}
 	tleft, tright := t.Split(key)
-	t.root = merge(t.compare, t.aggregate, tleft.root, tright.root)
+	t.root = merge(t.aggregate, tleft.root, tright.root)
 }
 
 func (t *SplayTree[K, V, A]) Min() K {

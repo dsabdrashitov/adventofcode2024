@@ -115,7 +115,7 @@ func (root *node[K, V, A]) max(agg Aggregator[K, V, A]) *node[K, V, A] {
 	return t
 }
 
-func merge[K, V, A any](cmp Comparator[K], agg Aggregator[K, V, A], left *node[K, V, A], right *node[K, V, A]) *node[K, V, A] {
+func merge[K, V, A any](agg Aggregator[K, V, A], left *node[K, V, A], right *node[K, V, A]) *node[K, V, A] {
 	if left == nil {
 		return right
 	}
