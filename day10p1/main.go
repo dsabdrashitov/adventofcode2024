@@ -8,40 +8,46 @@ import (
 )
 
 const (
-	// inputFile = "input.txt"
-	inputFile = "sample.txt"
+	inputFile = "input.txt"
+	// inputFile = "sample.txt"
 	// inputFile = "test.txt"
 )
+
+func add(to map[int]bool, from map[int]bool) {
+	for k, v := range from {
+		to[k] = v
+	}
+}
 
 func solve(s []string) int {
 	result := 0
 
-	a := make([][]int, len(s))
+	a := make([][]map[int]bool, len(s))
 	for i, si := range s {
-		a[i] = make([]int, len(si))
+		a[i] = make([]map[int]bool, len(si))
 		for j, c := range si {
+			a[i][j] = make(map[int]bool)
 			if c == '9' {
-				a[i][j] = 1
+				a[i][j][i+j*len(s)] = true
 			}
 		}
 	}
-	for cc := 8; cc >= 0; cc-- {
+	for cc := '8'; cc >= '0'; cc-- {
 		for i, si := range s {
-			for j := range si {
-				c := int(s[i][j] - '0')
+			for j, c := range si {
 				if c == cc {
 					ij := ip.New(i, j)
 					for _, d := range ip.DIR4 {
 						p := ij.Add(d)
 						if p.InsideStrings(s) {
-							if int(s[p.X][p.Y]-'0') == cc+1 {
-								a[i][j] += a[p.X][p.Y]
+							if s[p.X][p.Y] == byte(cc)+1 {
+								add(a[i][j], a[p.X][p.Y])
 							}
 						}
 					}
-					if cc == 0 {
-						result += a[i][j]
-						fmt.Println(a[i][j])
+					if cc == '0' {
+						result += len(a[i][j])
+						// fmt.Println(a[i][j])
 					}
 				}
 			}
