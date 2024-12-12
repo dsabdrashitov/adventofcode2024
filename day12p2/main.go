@@ -95,12 +95,10 @@ func perimeter(reg map[ip.Point]bool) int {
 				}
 			}
 			cnt := 0
-			for i := 0; i <= 1; i++ {
-				for j := 0; j <= 1; j++ {
-					p2 := p1.Add(ip.New(i, j))
-					if reg[p2] {
-						cnt += 1
-					}
+			for _, d2 := range ip.DIRDR {
+				p2 := p1.Add(d2)
+				if reg[p2] {
+					cnt += 1
 				}
 			}
 			if cnt == 1 {

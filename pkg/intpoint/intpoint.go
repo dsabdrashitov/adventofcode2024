@@ -23,6 +23,25 @@ var DIR8 = []Point{
 	{-1, -1},
 }
 
+var DIR9 = []Point{
+	{-1, -1},
+	{-1, 0},
+	{-1, 1},
+	{0, -1},
+	{0, 0},
+	{0, 1},
+	{1, -1},
+	{1, 0},
+	{1, 1},
+}
+
+var DIRDR = []Point{
+	{0, 0},
+	{0, 1},
+	{1, 0},
+	{1, 1},
+}
+
 func New(x int, y int) Point {
 	return Point{x, y}
 }
