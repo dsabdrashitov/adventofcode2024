@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 
 	// bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
@@ -12,8 +11,8 @@ import (
 )
 
 const (
-	// inputFile = "input.txt"
-	inputFile = "sample.txt"
+	inputFile = "input.txt"
+	// inputFile = "sample.txt"
 	// inputFile = "test.txt"
 
 	ACOST = 3
@@ -37,62 +36,69 @@ func solve(a, b, prize []ip.Point) int {
 }
 
 func cost(a, b, p ip.Point) int {
-	result := 0
-	var pc int
-
-	pc = costDirected(a, b, p, ACOST, BCOST)
-	if result == 0 || result > pc {
-		result = pc
+	p = p.Add(DELTA)
+	d := a.X*b.Y - a.Y*b.X
+	da := p.X*b.Y - p.Y*b.X
+	db := a.X*p.Y - a.Y*p.X
+	if d < 0 {
+		d = -d
+		da = -da
+		db = -db
 	}
+	if d == 0 {
+		result := 0
 
-	pc = costDirected(b, a, p, BCOST, ACOST)
-	if result == 0 || result > pc {
-		result = pc
+		for i := range b.X {
+			r := p.Sub(a.Mult(i))
+			if r.X < 0 || r.Y < 0 {
+				break
+			}
+			if r.X%b.X != 0 || r.Y%b.Y != 0 {
+				continue
+			}
+			if r.X/b.X != r.Y/b.Y {
+				break
+			}
+			j := r.X / b.X
+			pc := ACOST*i + BCOST*j
+			if result == 0 || result > pc {
+				result = pc
+			}
+		}
+
+		for i := range a.X {
+			r := p.Sub(b.Mult(i))
+			if r.X < 0 || r.Y < 0 {
+				break
+			}
+			if r.X%a.X != 0 || r.Y%a.Y != 0 {
+				continue
+			}
+			if r.X/a.X != r.Y/a.Y {
+				break
+			}
+			j := r.X / a.X
+			pc := ACOST*j + BCOST*i
+			if result == 0 || result > pc {
+				result = pc
+			}
+		}
+
+		return result
+	} else {
+		if da < 0 || db < 0 {
+			return 0
+		}
+		if da%d != 0 {
+			return 0
+		}
+		if db%d != 0 {
+			return 0
+		}
+		ia := da / d
+		ib := db / d
+		return ACOST*ia + BCOST*ib
 	}
-
-	return result
-}
-
-func costDirected(a, b, p ip.Point, acost, bcost int) int {
-	ZERO := big.NewInt(0)
-	px := big.NewInt(int64(p.X) + int64(DELTA.X))
-	py := big.NewInt(int64(p.Y) + int64(DELTA.Y))
-	bx := big.NewInt(int64(b.X))
-	by := big.NewInt(int64(b.Y))
-	result := 0
-
-	fmt.Println(a, b, p)
-	for i := range b.X * b.Y {
-		i64 := int64(i)
-		ax := big.NewInt(int64(a.X))
-		ay := big.NewInt(int64(a.Y))
-		ax.Mul(ax, big.NewInt(i64))
-		ay.Mul(ay, big.NewInt(i64))
-		ax.Sub(px, ax)
-		ay.Sub(py, ay)
-		if ax.Cmp(ZERO) < 0 || ay.Cmp(ZERO) < 0 {
-			break
-		}
-		var rx, ry big.Int
-		rx.Mod(ax, bx)
-		ry.Mod(ay, by)
-		fmt.Println("  ", rx.String(), ry.String())
-		if rx.Cmp(ZERO) != 0 || ry.Cmp(ZERO) != 0 {
-			continue
-		}
-		var dx, dy big.Int
-		dx.Div(ax, bx)
-		dy.Div(ay, by)
-		if dx.Cmp(&dy) != 0 {
-			continue
-		}
-		pc := acost*i + bcost*int(dx.Int64())
-		if result == 0 || result > pc {
-			result = pc
-		}
-	}
-
-	return result
 }
 
 func main() {
