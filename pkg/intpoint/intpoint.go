@@ -5,6 +5,11 @@ type Point struct {
 	Y int
 }
 
+var UP = Point{-1, 0}
+var DOWN = Point{1, 0}
+var LEFT = Point{0, -1}
+var RIGHT = Point{0, 1}
+
 var DIR4 = []Point{
 	{-1, 0},
 	{0, 1},
