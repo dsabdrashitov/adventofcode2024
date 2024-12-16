@@ -108,6 +108,10 @@ func (t *SplayTree[K, V, A]) Max() K {
 	return t.root.key
 }
 
+func (t *SplayTree[K, V, A]) Empty() bool {
+	return t.root == nil
+}
+
 func pushLeftToStack[K, V, A any](t *node[K, V, A], stack []*node[K, V, A]) []*node[K, V, A] {
 	for n := t; n != nil; n = n.left {
 		stack = append(stack, n)
