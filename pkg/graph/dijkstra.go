@@ -5,51 +5,48 @@ import (
 	"github.com/dsabdrashitov/adventofcode2024/pkg/splaytree"
 )
 
-type Cost[N any, E any, C any] interface {
-	Compare(other C) int
-	Add(edge E) C
+type Dist[C any, D any] interface {
+	Compare(other D) int
+	Add(to int, cost C) D
 }
 
-type NodeCost[K comparable, N Node[K, N, E], E any, C Cost[N, E, C]] struct {
-	Node N
-	Cost C
-}
+type dijkstraDist[C any, D Dist[C, D]] NodeCost[D]
 
-func (this NodeCost[K, N, E, C]) Compare(other NodeCost[K, N, E, C]) int {
+func (this dijkstraDist[C, D]) Compare(other dijkstraDist[C, D]) int {
 	cc := this.Cost.Compare(other.Cost)
 	if cc != 0 {
 		return cc
 	}
-	return this.Node.Compare(other.Node)
+	return bp.OrderedComparator(this.Node, other.Node)
 }
 
-func Dijkstra[K comparable, N Node[K, N, E], E Edge[N], C Cost[N, E, C]](starts []NodeCost[K, N, E, C]) map[K]C {
-	heap := splaytree.NewWithComparator[NodeCost[K, N, E, C], struct{}](bp.ComparableComparator[NodeCost[K, N, E, C]])
-	nearest := make(map[K]C)
+func Dijkstra[C any, D Dist[C, D]](g Graph[C], starts []NodeCost[D]) map[int]D {
+	heap := splaytree.NewWithComparator[dijkstraDist[C, D], struct{}](bp.ComparableComparator[dijkstraDist[C, D]])
+	nearest := make(map[int]D)
 	for _, start := range starts {
-		update(start, heap, nearest)
+		update(dijkstraDist[C, D](start), heap, nearest)
 	}
 	for !heap.Empty() {
 		best := heap.Min()
 		heap.Delete(best)
-		for _, e := range best.Node.Edges() {
-			update(NodeCost[K, N, E, C]{e.To(), best.Cost.Add(e)}, heap, nearest)
+		for _, e := range g.Edges(best.Node) {
+			update(dijkstraDist[C, D]{e.Node, best.Cost.Add(e.Node, e.Cost)}, heap, nearest)
 		}
 	}
 	return nearest
 }
 
-func update[K comparable, N Node[K, N, E], E any, C Cost[N, E, C]](
-	nc NodeCost[K, N, E, C],
-	heap *splaytree.SplayTree[NodeCost[K, N, E, C], struct{}, struct{}],
-	nearest map[K]C,
+func update[C any, D Dist[C, D]](
+	nodeDist dijkstraDist[C, D],
+	heap *splaytree.SplayTree[dijkstraDist[C, D], struct{}, struct{}],
+	nearest map[int]D,
 ) {
-	if ec, ok := nearest[nc.Node.Key()]; ok {
-		if ec.Compare(nc.Cost) < 0 {
+	if existingDist, ok := nearest[nodeDist.Node]; ok {
+		if existingDist.Compare(nodeDist.Cost) < 0 {
 			return
 		}
-		heap.Delete(NodeCost[K, N, E, C]{nc.Node, ec})
+		heap.Delete(dijkstraDist[C, D]{nodeDist.Node, existingDist})
 	}
-	heap.Set(nc, struct{}{})
-	nearest[nc.Node.Key()] = nc.Cost
+	heap.Set(nodeDist, struct{}{})
+	nearest[nodeDist.Node] = nodeDist.Cost
 }

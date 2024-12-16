@@ -1,11 +1,10 @@
 package graph
 
-type Node[K comparable, N any, E any] interface {
-	Compare(other N) int
-	Key() K
-	Edges() []E
+type NodeCost[C any] struct {
+	Node int
+	Cost C
 }
 
-type Edge[N any] interface {
-	To() N
+type Graph[C any] interface {
+	Edges(node int) []NodeCost[C]
 }
