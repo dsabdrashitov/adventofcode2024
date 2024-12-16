@@ -1,5 +1,7 @@
 package intpoint
 
+import bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
+
 type Point struct {
 	X int
 	Y int
@@ -65,6 +67,22 @@ func (t Point) Mult(m int) Point {
 
 func (t Point) InsideStrings(a []string) bool {
 	return PointInsideStrings(t, a)
+}
+
+func (t Point) Compare(o Point) int {
+	if t.X < o.X {
+		return bp.LESS
+	}
+	if t.X > o.X {
+		return bp.GREATER
+	}
+	if t.Y < o.Y {
+		return bp.LESS
+	}
+	if t.Y > o.Y {
+		return bp.GREATER
+	}
+	return bp.EQUAL
 }
 
 func PointInside[T any](p Point, a [][]T) bool {
