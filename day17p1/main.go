@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	inputFile = "input.txt"
-	// inputFile = "sample.txt"
+	// inputFile = "input.txt"
+	inputFile = "sample.txt"
 	// inputFile = "test.txt"
 )
 
