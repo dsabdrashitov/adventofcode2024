@@ -1,34 +1,33 @@
 package splaytree
 
 import (
-	"fmt"
-
+	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"golang.org/x/exp/constraints"
 )
 
 type SplayTree[K any, V any, A any] struct {
 	root      *node[K, V, A]
-	compare   Comparator[K]
+	compare   bp.Comparator[K]
 	aggregate Aggregator[K, V, A]
 }
 
 func New[K constraints.Ordered, V any]() *SplayTree[K, V, struct{}] {
-	return &SplayTree[K, V, struct{}]{nil, OrderedComparator[K], EmptyAggregator[K, V, struct{}]}
+	return &SplayTree[K, V, struct{}]{nil, bp.OrderedComparator[K], EmptyAggregator[K, V, struct{}]}
 }
 
-func NewWithComparator[K any, V any](compare Comparator[K]) *SplayTree[K, V, struct{}] {
+func NewWithComparator[K any, V any](compare bp.Comparator[K]) *SplayTree[K, V, struct{}] {
 	return &SplayTree[K, V, struct{}]{nil, compare, EmptyAggregator[K, V, struct{}]}
 }
 
 func NewWithAggregator[K constraints.Ordered, V any, A any](aggregate Aggregator[K, V, A]) *SplayTree[K, V, A] {
-	return &SplayTree[K, V, A]{nil, OrderedComparator[K], aggregate}
+	return &SplayTree[K, V, A]{nil, bp.OrderedComparator[K], aggregate}
 }
 
 func NewWithSize[K constraints.Ordered, V any]() *SplayTree[K, V, TreeSize] {
-	return &SplayTree[K, V, TreeSize]{nil, OrderedComparator[K], SizeAggregator[K, V]}
+	return &SplayTree[K, V, TreeSize]{nil, bp.OrderedComparator[K], SizeAggregator[K, V]}
 }
 
-func NewWithComparatorAndAggregator[K any, V any, A any](compare Comparator[K], aggregate Aggregator[K, V, A]) *SplayTree[K, V, A] {
+func NewWithComparatorAndAggregator[K any, V any, A any](compare bp.Comparator[K], aggregate Aggregator[K, V, A]) *SplayTree[K, V, A] {
 	return &SplayTree[K, V, A]{nil, compare, aggregate}
 }
 
@@ -47,7 +46,7 @@ func (t *SplayTree[K, V, A]) Get(key K) (value V, ok bool) {
 
 	t.root = t.root.splay(key, t.compare, t.aggregate)
 
-	if t.compare(t.root.key, key) != EQUAL {
+	if t.compare(t.root.key, key) != 0 {
 		return *new(V), false
 	} else {
 		return t.root.value, true
@@ -67,15 +66,14 @@ func (t *SplayTree[K, V, A]) Split(key K) (left *SplayTree[K, V, A], right *Spla
 		return t.assign(nil), t.assign(nil)
 	}
 	t.root = t.root.splay(key, t.compare, t.aggregate)
-	switch c := t.compare(t.root.key, key); c {
-	case GREATER:
+	c := t.compare(t.root.key, key)
+	switch {
+	case c > 0:
 		return t.assign(t.root.left), t.assign(t.root.reassign(t.aggregate, nil, t.root.right))
-	case LESS:
+	case c < 0:
 		return t.assign(t.root.reassign(t.aggregate, t.root.left, nil)), t.assign(t.root.right)
-	case EQUAL:
-		return t.assign(t.root.left), t.assign(t.root.right)
 	default:
-		panic(fmt.Errorf("unknown comparision result: %v", c))
+		return t.assign(t.root.left), t.assign(t.root.right)
 	}
 }
 

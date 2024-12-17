@@ -1,6 +1,8 @@
 package splaytree
 
-import "fmt"
+import (
+	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
+)
 
 type node[K any, V any, A any] struct {
 	key   K
@@ -18,22 +20,21 @@ func (n *node[K, V, A]) reassign(agg Aggregator[K, V, A], left *node[K, V, A], r
 	return makeNode(n.key, n.value, agg, left, right)
 }
 
-func (root *node[K, V, A]) splay(key K, cmp Comparator[K], agg Aggregator[K, V, A]) *node[K, V, A] {
+func (root *node[K, V, A]) splay(key K, cmp bp.Comparator[K], agg Aggregator[K, V, A]) *node[K, V, A] {
 	if root == nil {
 		return nil
 	}
 	path := make([]*node[K, V, A], 0)
 	for t := root; t != nil; {
 		path = append(path, t)
-		switch c := cmp(t.key, key); c {
-		case GREATER:
+		c := cmp(t.key, key)
+		switch {
+		case c > 0:
 			t = t.left
-		case LESS:
+		case c < 0:
 			t = t.right
-		case EQUAL:
-			t = nil
 		default:
-			panic(fmt.Errorf("unknown comparision result: %v", c))
+			t = nil
 		}
 	}
 	for len(path) > 1 {
@@ -42,7 +43,7 @@ func (root *node[K, V, A]) splay(key K, cmp Comparator[K], agg Aggregator[K, V, 
 		if len(path) == 2 {
 			var x1 *node[K, V, A]
 			var p1 *node[K, V, A]
-			if cmp(p0.key, key) == GREATER {
+			if cmp(p0.key, key) > 0 {
 				p1 = p0.reassign(agg, x0.right, p0.right)
 				x1 = x0.reassign(agg, x0.left, p1)
 			} else {
@@ -56,8 +57,8 @@ func (root *node[K, V, A]) splay(key K, cmp Comparator[K], agg Aggregator[K, V, 
 			var x1 *node[K, V, A]
 			var p1 *node[K, V, A]
 			var g1 *node[K, V, A]
-			if cmp(g0.key, key) == GREATER {
-				if cmp(p0.key, key) == GREATER {
+			if cmp(g0.key, key) > 0 {
+				if cmp(p0.key, key) > 0 {
 					g1 = g0.reassign(agg, p0.right, g0.right)
 					p1 = p0.reassign(agg, x0.right, g1)
 					x1 = x0.reassign(agg, x0.left, p1)
@@ -67,7 +68,7 @@ func (root *node[K, V, A]) splay(key K, cmp Comparator[K], agg Aggregator[K, V, 
 					x1 = x0.reassign(agg, p1, g1)
 				}
 			} else {
-				if cmp(p0.key, key) == LESS {
+				if cmp(p0.key, key) < 0 {
 					g1 = g0.reassign(agg, g0.left, p0.left)
 					p1 = p0.reassign(agg, g1, x0.left)
 					x1 = x0.reassign(agg, p1, x0.right)

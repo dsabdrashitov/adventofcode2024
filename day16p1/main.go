@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	// bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
+	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
 	ip "github.com/dsabdrashitov/adventofcode2024/pkg/intpoint"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/splaytree"
@@ -36,37 +36,16 @@ type dist struct {
 }
 
 func compare(d1 dist, d2 dist) int {
-	if d1.val < d2.val {
-		return splaytree.LESS
+	if c := bp.OrderedComparator(d1.val, d2.val); c != 0 {
+		return c
 	}
-	if d1.val > d2.val {
-		return splaytree.GREATER
+	if c := d1.state.pos.Compare(d2.state.pos); c != 0 {
+		return c
 	}
-	if d1.state.pos.X < d2.state.pos.X {
-		return splaytree.LESS
+	if c := d1.state.dir.Compare(d2.state.dir); c != 0 {
+		return c
 	}
-	if d1.state.pos.X > d2.state.pos.X {
-		return splaytree.GREATER
-	}
-	if d1.state.pos.Y < d2.state.pos.Y {
-		return splaytree.LESS
-	}
-	if d1.state.pos.Y > d2.state.pos.Y {
-		return splaytree.GREATER
-	}
-	if d1.state.dir.X < d2.state.dir.X {
-		return splaytree.LESS
-	}
-	if d1.state.dir.X > d2.state.dir.X {
-		return splaytree.GREATER
-	}
-	if d1.state.dir.Y < d2.state.dir.Y {
-		return splaytree.LESS
-	}
-	if d1.state.dir.Y > d2.state.dir.Y {
-		return splaytree.GREATER
-	}
-	return splaytree.EQUAL
+	return bp.EQUAL
 }
 
 func setDist(d dist, heap *splaytree.SplayTree[dist, struct{}, struct{}], nearest map[state]int) {
