@@ -1,4 +1,4 @@
-package comparableencoder
+package identificator
 
 type ComparableEncoder[T comparable] struct {
 	code   map[T]int

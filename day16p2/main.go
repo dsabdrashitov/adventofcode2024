@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
-	comparableencoder "github.com/dsabdrashitov/adventofcode2024/pkg/comparablecoder"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/graph"
+	"github.com/dsabdrashitov/adventofcode2024/pkg/identificator"
 	ip "github.com/dsabdrashitov/adventofcode2024/pkg/intpoint"
 )
 
@@ -33,7 +33,7 @@ type state struct {
 
 type Graph struct {
 	field [][]bool
-	enc   *comparableencoder.ComparableEncoder[state]
+	enc   *identificator.ComparableEncoder[state]
 }
 
 func (g *Graph) Edges(node int) []graph.NodeCost[int] {
@@ -60,7 +60,7 @@ func (d Dist) Add(to int, cost int) Dist {
 }
 
 func exit(starts []state, field [][]bool) map[state]int {
-	g := &Graph{field, comparableencoder.New[state]()}
+	g := &Graph{field, identificator.New[state]()}
 	sc := make([]graph.NodeCost[Dist], len(starts))
 	for i, start := range starts {
 		sc[i] = graph.NodeCost[Dist]{Node: g.enc.Id(start), Cost: 0}
