@@ -42,6 +42,13 @@ var DIR9 = []Point{
 	{1, 1},
 }
 
+var DIRDIAG = []Point{
+	{-1, 1},
+	{1, 1},
+	{1, -1},
+	{-1, -1},
+}
+
 var DIRDR = []Point{
 	{0, 0},
 	{0, 1},
