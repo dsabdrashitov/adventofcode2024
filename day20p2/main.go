@@ -7,6 +7,7 @@ import (
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/graph"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/identificator"
+	"github.com/dsabdrashitov/adventofcode2024/pkg/integer"
 	ip "github.com/dsabdrashitov/adventofcode2024/pkg/intpoint"
 )
 
@@ -14,12 +15,14 @@ const (
 	inputFile = "input.txt"
 	NEEDSAVE  = 100
 	// inputFile = "sample.txt"
-	// NEEDSAVE  = 41
+	// NEEDSAVE  = 75
 
 	WALL   = '#'
 	FREE   = '.'
 	START  = 'S'
 	FINISH = 'E'
+
+	ALLOWED = 20
 )
 
 type Graph struct {
@@ -82,33 +85,34 @@ func solve(maze []string) int {
 	fromFinish := graph.Dijkstra[int, Dist](g, []graph.NodeCost[Dist]{{Node: g.Node(finish), Cost: 0}})
 	baseline := fromStart[g.Node(finish)]
 
-	for i := 0; i < len(free); i++ {
-		for j := 0; j < len(free[i]); j++ {
-			if !free[i][j] {
+	fmt.Println(baseline, fromStart[g.Node(ip.New(finish.X-18, finish.Y))])
+
+	for i0 := 0; i0 < len(free); i0++ {
+		for j0 := 0; j0 < len(free[i0]); j0++ {
+			if !free[i0][j0] {
 				continue
 			}
-			for _, d := range ip.DIR4 {
-				p0 := ip.New(i, j)
-				p1 := p0.Add(d.Mult(2))
-				if p1.InsideStrings(maze) && free[p1.X][p1.Y] {
-					ds, oks := fromStart[g.Node(p0)]
-					df, okf := fromFinish[g.Node(p1)]
-					if oks && okf {
-						save := baseline - (ds + df + 2)
-						if save >= NEEDSAVE {
-							answer = answer + 1
-						}
+			p0 := ip.New(i0, j0)
+			for i1 := max(0, i0-ALLOWED); i1 < min(len(free), i0+ALLOWED+1); i1++ {
+				for j1 := max(0, j0-ALLOWED); j1 < min(len(free[i1]), j0+ALLOWED+1); j1++ {
+					if !free[i1][j1] {
+						continue
 					}
-				}
-			}
-			for _, d := range ip.DIRDIAG {
-				p0 := ip.New(i, j)
-				p1 := p0.Add(d)
-				if p1.InsideStrings(maze) && free[p1.X][p1.Y] {
+					p1 := ip.New(i1, j1)
+					dcheat := integer.Abs(i0-i1) + integer.Abs(j0-j1)
+					if dcheat > ALLOWED {
+						continue
+					}
+					// If cheat mode is active when the end position is reached, cheat mode ends automatically.
+					// But the "right" answer doesn't account it.
+					// if dcheat > ALLOWED-2 && ((i0 == finish.X && i1 == finish.X && integer.Abs(j0-finish.Y)+integer.Abs(j1-finish.Y) == dcheat && integer.Abs(j0-finish.Y) < dcheat) ||
+					// 	(j0 == finish.Y && j1 == finish.Y && integer.Abs(i0-finish.X)+integer.Abs(i1-finish.X) == dcheat && integer.Abs(i0-finish.X) < dcheat)) {
+					// 	continue
+					// }
 					ds, oks := fromStart[g.Node(p0)]
 					df, okf := fromFinish[g.Node(p1)]
 					if oks && okf {
-						save := baseline - (ds + df + 2)
+						save := baseline - (ds + df + Dist(dcheat))
 						if save >= NEEDSAVE {
 							answer = answer + 1
 						}
