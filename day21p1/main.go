@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	// bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
@@ -16,17 +15,20 @@ const (
 	// inputFile = "input.txt"
 	inputFile = "sample.txt"
 
-	DOWN     = "v"
-	UP       = "^"
-	LEFT     = "<"
-	RIGHT    = ">"
-	ACTIVATE = "A"
+	DOWNS     = "v"
+	UPS       = "^"
+	LEFTS     = "<"
+	RIGHTS    = ">"
+	ACTIVATES = "A"
+	SPACE     = ' '
 )
 
 var DIRK = []string{
 	" ^A",
 	"<v>",
 }
+
+var DIRKU, DIRKV = find(ACTIVATES[0], DIRK)
 
 var NUMK = []string{
 	"789",
@@ -35,45 +37,69 @@ var NUMK = []string{
 	" 0A",
 }
 
-func shortest(s string, kb []string, u *int, v *int) string {
-	var buf strings.Builder
-	su, sv := find(' ', kb)
-	for cur := 0; cur < len(s); {
-		nu, nv := find(s[cur], kb)
-		for *u != nu || *v != nv {
-			// Avoid space
-			if *v == sv && nu != su {
-				if *v < nv {
-					buf.WriteString(RIGHT)
-					*v += 1
-				} else {
-					buf.WriteString(LEFT)
-					*v -= 1
-				}
-				continue
-			}
+var NUMKU, NUMKV = find(ACTIVATES[0], NUMK)
 
-			switch {
-			case *u < nu:
-				buf.WriteString(DOWN)
-				*u += 1
-			case *u > nu:
-				buf.WriteString(UP)
-				*u -= 1
-			default:
-				if *v < nv {
-					buf.WriteString(RIGHT)
-					*v += 1
-				} else {
-					buf.WriteString(LEFT)
-					*v -= 1
-				}
-			}
-		}
-		buf.WriteString(ACTIVATE)
-		cur += 1
+func dm(depth int, zero int, other int) int {
+	if depth == 0 {
+		return zero
+	} else {
+		return other
 	}
-	return buf.String()
+}
+
+func shortest(s string, depth int, kb []string, u int, v int, lastsu int, lastsv int) (result string, lasteu int, lastev int) {
+	if depth == 0 {
+		return s, lastsu, lastsv
+	}
+	if s == "" {
+		return "", lastsu, lastsv
+	}
+	if kb[u][v] == SPACE {
+		panic("SPACE")
+	}
+	if s[0] == kb[u][v] {
+		sr, seu, sev := shortest(ACTIVATES, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
+		cr, ceu, cev := shortest(s[1:], depth, kb, u, v, dm(depth-1, u, seu), dm(depth-1, v, sev))
+		return sr + cr, ceu, cev
+	}
+	ok := false
+	nu, nv := find(s[0], kb)
+	if u < nu && kb[u+1][v] != SPACE {
+		sr, seu, sev := shortest(DOWNS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
+		cr, ceu, cev := shortest(s, depth, kb, u+1, v, dm(depth-1, u+1, seu), dm(depth-1, v, sev))
+		if !ok || len(result) > len(sr)+len(cr) {
+			result, lasteu, lastev = sr+cr, ceu, cev
+			ok = true
+		}
+	}
+	if u > nu && kb[u-1][v] != SPACE {
+		sr, seu, sev := shortest(UPS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
+		cr, ceu, cev := shortest(s, depth, kb, u-1, v, dm(depth-1, u-1, seu), dm(depth-1, v, sev))
+		if !ok || len(result) > len(sr)+len(cr) {
+			result, lasteu, lastev = sr+cr, ceu, cev
+			ok = true
+		}
+	}
+	if v < nv && kb[u][v+1] != SPACE {
+		sr, seu, sev := shortest(RIGHTS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
+		cr, ceu, cev := shortest(s, depth, kb, u, v+1, dm(depth-1, u, seu), dm(depth-1, v+1, sev))
+		if !ok || len(result) > len(sr)+len(cr) {
+			result, lasteu, lastev = sr+cr, ceu, cev
+			ok = true
+		}
+	}
+	if v > nv && kb[u][v-1] != SPACE {
+		sr, seu, sev := shortest(LEFTS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
+		cr, ceu, cev := shortest(s, depth, kb, u, v-1, dm(depth-1, u, seu), dm(depth-1, v-1, sev))
+		if !ok || len(result) > len(sr)+len(cr) {
+			result, lasteu, lastev = sr+cr, ceu, cev
+			ok = true
+		}
+	}
+	if !ok {
+		panic("!ok")
+	}
+	return result, lasteu, lastev
 }
 
 func find(c byte, kb []string) (int, int) {
@@ -90,21 +116,12 @@ func find(c byte, kb []string) (int, int) {
 func solve(inp []string) int {
 	answer := 0
 
-	r1u, r1v := find(ACTIVATE[0], NUMK)
-	r2u, r2v := find(ACTIVATE[0], DIRK)
-	r3u, r3v := find(ACTIVATE[0], DIRK)
-
 	for _, s := range inp {
 		num := integer.Int(s[:len(s)-1])
-		r1 := shortest(s, NUMK, &r1u, &r1v)
-		r2 := shortest(r1, DIRK, &r2u, &r2v)
-		r3 := shortest(r2, DIRK, &r3u, &r3v)
-		fmt.Println(s)
-		fmt.Println(r1, r1u, r1v)
-		fmt.Println(r2, r2u, r2v)
-		fmt.Println(r3, r3u, r3v)
-		fmt.Println(num, len(r3), num*len(r3))
-		answer += num * len(r3)
+		commands, _, _ := shortest(s, 3, NUMK, NUMKU, NUMKV, DIRKU, DIRKV)
+		fmt.Println(commands)
+		fmt.Println(num, len(commands), num*len(commands))
+		answer += num * len(commands)
 	}
 
 	return answer
