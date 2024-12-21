@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	// bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
@@ -12,15 +13,15 @@ import (
 )
 
 const (
-	// inputFile = "input.txt"
-	inputFile = "sample.txt"
+	inputFile = "input.txt"
+	// inputFile = "sample.txt"
 
 	DOWNS     = "v"
 	UPS       = "^"
 	LEFTS     = "<"
 	RIGHTS    = ">"
 	ACTIVATES = "A"
-	SPACE     = ' '
+	SPACES    = " "
 )
 
 var DIRK = []string{
@@ -39,67 +40,55 @@ var NUMK = []string{
 
 var NUMKU, NUMKV = find(ACTIVATES[0], NUMK)
 
-func dm(depth int, zero int, other int) int {
-	if depth == 0 {
-		return zero
-	} else {
-		return other
-	}
-}
-
-func shortest(s string, depth int, kb []string, u int, v int, lastsu int, lastsv int) (result string, lasteu int, lastev int) {
-	if depth == 0 {
-		return s, lastsu, lastsv
-	}
-	if s == "" {
-		return "", lastsu, lastsv
-	}
-	if kb[u][v] == SPACE {
-		panic("SPACE")
-	}
-	if s[0] == kb[u][v] {
-		sr, seu, sev := shortest(ACTIVATES, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
-		cr, ceu, cev := shortest(s[1:], depth, kb, u, v, dm(depth-1, u, seu), dm(depth-1, v, sev))
-		return sr + cr, ceu, cev
-	}
-	ok := false
-	nu, nv := find(s[0], kb)
-	if u < nu && kb[u+1][v] != SPACE {
-		sr, seu, sev := shortest(DOWNS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
-		cr, ceu, cev := shortest(s, depth, kb, u+1, v, dm(depth-1, u+1, seu), dm(depth-1, v, sev))
-		if !ok || len(result) > len(sr)+len(cr) {
-			result, lasteu, lastev = sr+cr, ceu, cev
-			ok = true
+func shortest(s string, kb []string, ku int, kv int) string {
+	var b strings.Builder
+	u, v := ku, kv
+	for i := range s {
+		nu, nv := find(s[i], kb)
+		var cb, pb strings.Builder
+		for step := v; step < nv; step++ {
+			cb.WriteString(RIGHTS)
+			pb.WriteByte(kb[u][step])
 		}
-	}
-	if u > nu && kb[u-1][v] != SPACE {
-		sr, seu, sev := shortest(UPS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
-		cr, ceu, cev := shortest(s, depth, kb, u-1, v, dm(depth-1, u-1, seu), dm(depth-1, v, sev))
-		if !ok || len(result) > len(sr)+len(cr) {
-			result, lasteu, lastev = sr+cr, ceu, cev
-			ok = true
+		for step := v; step > nv; step-- {
+			cb.WriteString(LEFTS)
+			pb.WriteByte(kb[u][step])
 		}
-	}
-	if v < nv && kb[u][v+1] != SPACE {
-		sr, seu, sev := shortest(RIGHTS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
-		cr, ceu, cev := shortest(s, depth, kb, u, v+1, dm(depth-1, u, seu), dm(depth-1, v+1, sev))
-		if !ok || len(result) > len(sr)+len(cr) {
-			result, lasteu, lastev = sr+cr, ceu, cev
-			ok = true
+		for step := u; step < nu; step++ {
+			cb.WriteString(DOWNS)
+			pb.WriteByte(kb[step][nv])
 		}
-	}
-	if v > nv && kb[u][v-1] != SPACE {
-		sr, seu, sev := shortest(LEFTS, depth-1, DIRK, dm(depth-2, lastsu, DIRKU), dm(depth-2, lastsv, DIRKV), lastsu, lastsv)
-		cr, ceu, cev := shortest(s, depth, kb, u, v-1, dm(depth-1, u, seu), dm(depth-1, v-1, sev))
-		if !ok || len(result) > len(sr)+len(cr) {
-			result, lasteu, lastev = sr+cr, ceu, cev
-			ok = true
+		for step := u; step > nu; step-- {
+			cb.WriteString(UPS)
+			pb.WriteByte(kb[step][nv])
 		}
+		if !strings.Contains(pb.String(), SPACES) {
+			b.WriteString(cb.String())
+		} else {
+			cb.Reset()
+			pb.Reset()
+			for step := u; step < nu; step++ {
+				cb.WriteString(DOWNS)
+				pb.WriteByte(kb[step][v])
+			}
+			for step := u; step > nu; step-- {
+				cb.WriteString(UPS)
+				pb.WriteByte(kb[step][v])
+			}
+			for step := v; step < nv; step++ {
+				cb.WriteString(RIGHTS)
+				pb.WriteByte(kb[nu][step])
+			}
+			for step := v; step > nv; step-- {
+				cb.WriteString(LEFTS)
+				pb.WriteByte(kb[nu][step])
+			}
+			b.WriteString(cb.String())
+		}
+		u, v = nu, nv
+		b.WriteString(ACTIVATES)
 	}
-	if !ok {
-		panic("!ok")
-	}
-	return result, lasteu, lastev
+	return b.String()
 }
 
 func find(c byte, kb []string) (int, int) {
@@ -118,10 +107,15 @@ func solve(inp []string) int {
 
 	for _, s := range inp {
 		num := integer.Int(s[:len(s)-1])
-		commands, _, _ := shortest(s, 3, NUMK, NUMKU, NUMKV, DIRKU, DIRKV)
-		fmt.Println(commands)
-		fmt.Println(num, len(commands), num*len(commands))
-		answer += num * len(commands)
+		r1 := shortest(s, NUMK, NUMKU, NUMKV)
+		r2 := shortest(r1, DIRK, DIRKU, DIRKV)
+		r3 := shortest(r2, DIRK, DIRKU, DIRKV)
+		fmt.Println(s)
+		fmt.Println(r1)
+		fmt.Println(r2)
+		fmt.Println(r3)
+		fmt.Println(num, len(r3), num*len(r3))
+		answer += num * len(r3)
 	}
 
 	return answer
