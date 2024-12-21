@@ -40,53 +40,68 @@ var NUMK = []string{
 
 var NUMKU, NUMKV = find(ACTIVATES[0], NUMK)
 
-func shortest(s string, kb []string, ku int, kv int) string {
+func shortest(s string, kb []string, ku int, kv int, depth int) string {
+	if depth == 0 {
+		return s
+	}
+	if s == "" {
+		return ""
+	}
 	var b strings.Builder
 	u, v := ku, kv
 	for i := range s {
 		nu, nv := find(s[i], kb)
-		var cb, pb strings.Builder
+		var cb1, pb1 strings.Builder
 		for step := v; step < nv; step++ {
-			cb.WriteString(RIGHTS)
-			pb.WriteByte(kb[u][step])
+			cb1.WriteString(RIGHTS)
+			pb1.WriteByte(kb[u][step])
 		}
 		for step := v; step > nv; step-- {
-			cb.WriteString(LEFTS)
-			pb.WriteByte(kb[u][step])
+			cb1.WriteString(LEFTS)
+			pb1.WriteByte(kb[u][step])
 		}
 		for step := u; step < nu; step++ {
-			cb.WriteString(DOWNS)
-			pb.WriteByte(kb[step][nv])
+			cb1.WriteString(DOWNS)
+			pb1.WriteByte(kb[step][nv])
 		}
 		for step := u; step > nu; step-- {
-			cb.WriteString(UPS)
-			pb.WriteByte(kb[step][nv])
+			cb1.WriteString(UPS)
+			pb1.WriteByte(kb[step][nv])
 		}
-		if !strings.Contains(pb.String(), SPACES) {
-			b.WriteString(cb.String())
+		var cb2, pb2 strings.Builder
+		for step := u; step < nu; step++ {
+			cb2.WriteString(DOWNS)
+			pb2.WriteByte(kb[step][v])
+		}
+		for step := u; step > nu; step-- {
+			cb2.WriteString(UPS)
+			pb2.WriteByte(kb[step][v])
+		}
+		for step := v; step < nv; step++ {
+			cb2.WriteString(RIGHTS)
+			pb2.WriteByte(kb[nu][step])
+		}
+		for step := v; step > nv; step-- {
+			cb2.WriteString(LEFTS)
+			pb2.WriteByte(kb[nu][step])
+		}
+		if strings.Contains(pb1.String(), SPACES) && strings.Contains(pb2.String(), SPACES) {
+			panic("spaces everywhere!!!")
+		}
+		if strings.Contains(pb1.String(), SPACES) {
+			cb1 = cb2
+		}
+		if strings.Contains(pb2.String(), SPACES) {
+			cb2 = cb1
+		}
+		s1 := shortest(cb1.String()+ACTIVATES, DIRK, DIRKU, DIRKV, depth-1)
+		s2 := shortest(cb2.String()+ACTIVATES, DIRK, DIRKU, DIRKV, depth-1)
+		if len(s1) <= len(s2) {
+			b.WriteString(s1)
 		} else {
-			cb.Reset()
-			pb.Reset()
-			for step := u; step < nu; step++ {
-				cb.WriteString(DOWNS)
-				pb.WriteByte(kb[step][v])
-			}
-			for step := u; step > nu; step-- {
-				cb.WriteString(UPS)
-				pb.WriteByte(kb[step][v])
-			}
-			for step := v; step < nv; step++ {
-				cb.WriteString(RIGHTS)
-				pb.WriteByte(kb[nu][step])
-			}
-			for step := v; step > nv; step-- {
-				cb.WriteString(LEFTS)
-				pb.WriteByte(kb[nu][step])
-			}
-			b.WriteString(cb.String())
+			b.WriteString(s2)
 		}
 		u, v = nu, nv
-		b.WriteString(ACTIVATES)
 	}
 	return b.String()
 }
@@ -107,15 +122,10 @@ func solve(inp []string) int {
 
 	for _, s := range inp {
 		num := integer.Int(s[:len(s)-1])
-		r1 := shortest(s, NUMK, NUMKU, NUMKV)
-		r2 := shortest(r1, DIRK, DIRKU, DIRKV)
-		r3 := shortest(r2, DIRK, DIRKU, DIRKV)
-		fmt.Println(s)
-		fmt.Println(r1)
-		fmt.Println(r2)
-		fmt.Println(r3)
-		fmt.Println(num, len(r3), num*len(r3))
-		answer += num * len(r3)
+		c := shortest(s, NUMK, NUMKU, NUMKV, 3)
+		fmt.Println(c)
+		fmt.Println(num, len(c), num*len(c))
+		answer += num * len(c)
 	}
 
 	return answer
