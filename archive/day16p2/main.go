@@ -6,7 +6,6 @@ import (
 	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/graph"
-	"github.com/dsabdrashitov/adventofcode2024/pkg/identificator"
 	ip "github.com/dsabdrashitov/adventofcode2024/pkg/intpoint"
 )
 
@@ -33,18 +32,16 @@ type state struct {
 
 type Graph struct {
 	field [][]bool
-	enc   *identificator.ComparableEncoder[state]
 }
 
-func (g *Graph) Edges(node int) []graph.NodeCost[int] {
-	ts := g.enc.Item(node)
-	result := make([]graph.NodeCost[int], 0)
-	npos := ts.pos.Add(ts.dir)
-	if !g.field[npos.X][npos.Y] {
-		result = append(result, graph.NodeCost[int]{Node: g.enc.Id(state{npos, ts.dir}), Cost: DIRECT})
+func (g *Graph) Edges(node state) []graph.ArbitraryNodeCost[state, int] {
+	result := make([]graph.ArbitraryNodeCost[state, int], 0)
+	cpos := node.pos.Add(node.dir)
+	if !g.field[cpos.X][cpos.Y] {
+		result = append(result, graph.ArbitraryNodeCost[state, int]{Node: state{cpos, node.dir}, Cost: DIRECT})
 	}
 	for _, d := range ip.DIR4 {
-		result = append(result, graph.NodeCost[int]{Node: g.enc.Id(state{ts.pos, d}), Cost: ROTATE})
+		result = append(result, graph.ArbitraryNodeCost[state, int]{Node: state{node.pos, d}, Cost: ROTATE})
 	}
 	return result
 }
@@ -55,20 +52,23 @@ func (d Dist) Compare(other Dist) int {
 	return bp.OrderedComparator(d, other)
 }
 
-func (d Dist) Add(to int, cost int) Dist {
+func (d Dist) Add(cost int) Dist {
 	return Dist(int(d) + cost)
 }
 
 func exit(starts []state, field [][]bool) map[state]int {
-	g := &Graph{field, identificator.New[state]()}
-	sc := make([]graph.NodeCost[Dist], len(starts))
+	g := &Graph{field}
+	eg := graph.NewEncodedGraph(g)
+	sc := make([]int, len(starts))
 	for i, start := range starts {
-		sc[i] = graph.NodeCost[Dist]{Node: g.enc.Id(start), Cost: 0}
+		sc[i] = eg.Encoder.Id(start)
 	}
-	nearest := graph.Dijkstra[int, Dist](g, sc)
+	dijkstra := graph.NewDijkstra[int, Dist](eg)
+	dijkstra.SetZeroes(sc)
+	nearest := dijkstra.Distances()
 	result := make(map[state]int)
 	for k, v := range nearest {
-		result[g.enc.Item(k)] = int(v)
+		result[eg.Encoder.Item(k)] = int(v)
 	}
 	return result
 }

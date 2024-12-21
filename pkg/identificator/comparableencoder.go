@@ -22,3 +22,11 @@ func (encoder *ComparableEncoder[T]) Id(item T) int {
 func (encoder *ComparableEncoder[T]) Item(id int) T {
 	return encoder.decode[id]
 }
+
+func DecodeKeys[T comparable, V any](enc *ComparableEncoder[T], m map[int]V) map[T]V {
+	result := make(map[T]V)
+	for k, v := range m {
+		result[enc.Item(k)] = v
+	}
+	return result
+}

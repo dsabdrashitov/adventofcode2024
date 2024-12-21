@@ -19,6 +19,10 @@ func NewWithComparator[K any, V any](compare bp.Comparator[K]) *SplayTree[K, V, 
 	return &SplayTree[K, V, struct{}]{nil, compare, EmptyAggregator[K, V, struct{}]}
 }
 
+func NewWithComparable[K bp.Comparable[K], V any]() *SplayTree[K, V, struct{}] {
+	return &SplayTree[K, V, struct{}]{nil, bp.ComparableComparator[K], EmptyAggregator[K, V, struct{}]}
+}
+
 func NewWithAggregator[K constraints.Ordered, V any, A any](aggregate Aggregator[K, V, A]) *SplayTree[K, V, A] {
 	return &SplayTree[K, V, A]{nil, bp.OrderedComparator[K], aggregate}
 }

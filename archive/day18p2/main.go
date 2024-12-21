@@ -46,7 +46,7 @@ func (d Dist) Compare(other Dist) int {
 	return bp.OrderedComparator(d, other)
 }
 
-func (d Dist) Add(to int, cost int) Dist {
+func (d Dist) Add(cost int) Dist {
 	return Dist(int(d) + cost)
 }
 
@@ -63,8 +63,9 @@ func solve(bytes []ip.Point) ip.Point {
 
 	for _, b := range bytes {
 		occupied[b.X][b.Y] = true
-		dist := graph.Dijkstra[int, Dist](g, []graph.NodeCost[Dist]{{Node: g.Node(start), Cost: 0}})
-		if _, ok := dist[g.Node(finish)]; !ok {
+		dijkstra := graph.NewDijkstra[int, Dist](g)
+		dijkstra.SetZeroes([]int{g.Node(start)})
+		if dijkstra.Reachable(g.Node(finish)) {
 			return b
 		}
 	}

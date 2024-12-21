@@ -5,7 +5,6 @@ import (
 
 	"github.com/dsabdrashitov/adventofcode2024/pkg/fileread"
 	"github.com/dsabdrashitov/adventofcode2024/pkg/graph"
-	"github.com/dsabdrashitov/adventofcode2024/pkg/identificator"
 
 	bp "github.com/dsabdrashitov/adventofcode2024/pkg/boilerplate"
 	ip "github.com/dsabdrashitov/adventofcode2024/pkg/intpoint"
@@ -23,23 +22,17 @@ const (
 
 type Graph struct {
 	field [][]bool
-	enc   *identificator.ComparableEncoder[ip.Point]
 }
 
-func (g *Graph) Edges(node int) []graph.NodeCost[int] {
-	p := g.enc.Item(node)
-	result := make([]graph.NodeCost[int], 0)
+func (g *Graph) Edges(p ip.Point) []graph.ArbitraryNodeCost[ip.Point, int] {
+	result := make([]graph.ArbitraryNodeCost[ip.Point, int], 0)
 	for _, d := range ip.DIR4 {
 		np := p.Add(d)
 		if np.X >= 0 && np.X < WSIZE && np.Y >= 0 && np.Y < WSIZE && !g.field[np.X][np.Y] {
-			result = append(result, graph.NodeCost[int]{Node: g.Node(np), Cost: 1})
+			result = append(result, graph.ArbitraryNodeCost[ip.Point, int]{Node: np, Cost: 1})
 		}
 	}
 	return result
-}
-
-func (g *Graph) Node(p ip.Point) int {
-	return g.enc.Id(p)
 }
 
 type Dist int
@@ -48,7 +41,7 @@ func (d Dist) Compare(other Dist) int {
 	return bp.OrderedComparator(d, other)
 }
 
-func (d Dist) Add(to int, cost int) Dist {
+func (d Dist) Add(cost int) Dist {
 	return Dist(int(d) + cost)
 }
 
@@ -64,12 +57,14 @@ func solve(bytes []ip.Point) int {
 		occupied[bytes[i].X][bytes[i].Y] = true
 	}
 
-	g := &Graph{occupied, identificator.New[ip.Point]()}
+	g := &Graph{occupied}
+	eg := graph.NewEncodedGraph[ip.Point, int](g)
 
 	start := ip.New(0, 0)
 	finish := ip.New(WSIZE-1, WSIZE-1)
-	dist := graph.Dijkstra[int, Dist](g, []graph.NodeCost[Dist]{{Node: g.Node(start), Cost: 0}})
-	result = int(dist[g.Node(finish)])
+	dijkstra := graph.NewDijkstra[int, Dist](eg)
+	dijkstra.SetZeroes([]int{eg.Encoder.Id(start)})
+	result = int(dijkstra.Dist(eg.Encoder.Id(finish)))
 
 	return result
 }

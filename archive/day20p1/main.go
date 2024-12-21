@@ -49,7 +49,7 @@ func (d Dist) Compare(other Dist) int {
 	return bp.OrderedComparator(d, other)
 }
 
-func (d Dist) Add(to int, cost int) Dist {
+func (d Dist) Add(cost int) Dist {
 	return Dist(int(d) + cost)
 }
 
@@ -78,8 +78,8 @@ func solve(maze []string) int {
 	}
 
 	g := &Graph{free: free, enc: identificator.New[ip.Point]()}
-	fromStart := graph.Dijkstra[int, Dist](g, []graph.NodeCost[Dist]{{Node: g.Node(start), Cost: 0}})
-	fromFinish := graph.Dijkstra[int, Dist](g, []graph.NodeCost[Dist]{{Node: g.Node(finish), Cost: 0}})
+	fromStart := graph.NewDijkstra[int, Dist](g).SetZeroes([]int{g.Node(start)}).Distances()
+	fromFinish := graph.NewDijkstra[int, Dist](g).SetZeroes([]int{g.Node(finish)}).Distances()
 	baseline := fromStart[g.Node(finish)]
 
 	for i := 0; i < len(free); i++ {

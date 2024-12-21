@@ -7,12 +7,12 @@ import (
 
 type Dist[C any, D any] interface {
 	Compare(other D) int
-	Add(to int, cost C) D
+	Add(cost C) D
 }
 
-type dijkstraDist[C any, D Dist[C, D]] NodeCost[D]
+type Start[C any, D Dist[C, D]] NodeCost[D]
 
-func (this dijkstraDist[C, D]) Compare(other dijkstraDist[C, D]) int {
+func (this Start[C, D]) Compare(other Start[C, D]) int {
 	cc := this.Cost.Compare(other.Cost)
 	if cc != 0 {
 		return cc
@@ -20,33 +20,77 @@ func (this dijkstraDist[C, D]) Compare(other dijkstraDist[C, D]) int {
 	return bp.OrderedComparator(this.Node, other.Node)
 }
 
-func Dijkstra[C any, D Dist[C, D]](g Graph[C], starts []NodeCost[D]) map[int]D {
-	heap := splaytree.NewWithComparator[dijkstraDist[C, D], struct{}](bp.ComparableComparator[dijkstraDist[C, D]])
-	nearest := make(map[int]D)
+type Dijkstra[C any, D Dist[C, D]] struct {
+	g Graph[C]
+	d map[int]D
+}
+
+func NewDijkstra[C any, D Dist[C, D]](g Graph[C]) *Dijkstra[C, D] {
+	dij := &Dijkstra[C, D]{g, make(map[int]D)}
+	return dij
+}
+
+func (dij *Dijkstra[C, D]) SetDists(starts []Start[C, D]) {
+	heap := splaytree.NewWithComparable[Start[C, D], struct{}]()
 	for _, start := range starts {
-		update(dijkstraDist[C, D](start), heap, nearest)
+		dij.update(start, heap)
 	}
+	dij.processHeap(heap)
+}
+
+func (dij *Dijkstra[C, D]) Revisit(nodes []int) {
+	heap := splaytree.NewWithComparable[Start[C, D], struct{}]()
+	for _, n := range nodes {
+		if existingDist, ok := dij.d[n]; ok {
+			heap.Set(Start[C, D]{n, existingDist}, struct{}{})
+		}
+	}
+	dij.processHeap(heap)
+}
+
+func (dij *Dijkstra[C, D]) SetZeroes(nodes []int) *Dijkstra[C, D] {
+	starts := make([]Start[C, D], len(nodes))
+	for i, n := range nodes {
+		starts[i] = Start[C, D]{n, *new(D)}
+	}
+	dij.SetDists(starts)
+	return dij
+}
+
+func (dij *Dijkstra[C, D]) Reachable(node int) bool {
+	_, ok := dij.d[node]
+	return ok
+}
+
+func (dij *Dijkstra[C, D]) Dist(node int) D {
+	return dij.d[node]
+}
+
+func (dij *Dijkstra[C, D]) Distances() map[int]D {
+	result := make(map[int]D)
+	for k, v := range dij.d {
+		result[k] = v
+	}
+	return result
+}
+
+func (dij *Dijkstra[C, D]) processHeap(heap *splaytree.SplayTree[Start[C, D], struct{}, struct{}]) {
 	for !heap.Empty() {
 		best := heap.Min()
 		heap.Delete(best)
-		for _, e := range g.Edges(best.Node) {
-			update(dijkstraDist[C, D]{e.Node, best.Cost.Add(e.Node, e.Cost)}, heap, nearest)
+		for _, e := range dij.g.Edges(best.Node) {
+			dij.update(Start[C, D]{e.Node, best.Cost.Add(e.Cost)}, heap)
 		}
 	}
-	return nearest
 }
 
-func update[C any, D Dist[C, D]](
-	nodeDist dijkstraDist[C, D],
-	heap *splaytree.SplayTree[dijkstraDist[C, D], struct{}, struct{}],
-	nearest map[int]D,
-) {
-	if existingDist, ok := nearest[nodeDist.Node]; ok {
+func (dij *Dijkstra[C, D]) update(nodeDist Start[C, D], heap *splaytree.SplayTree[Start[C, D], struct{}, struct{}]) {
+	if existingDist, ok := dij.d[nodeDist.Node]; ok {
 		if existingDist.Compare(nodeDist.Cost) < 0 {
 			return
 		}
-		heap.Delete(dijkstraDist[C, D]{nodeDist.Node, existingDist})
+		heap.Delete(Start[C, D]{nodeDist.Node, existingDist})
 	}
 	heap.Set(nodeDist, struct{}{})
-	nearest[nodeDist.Node] = nodeDist.Cost
+	dij.d[nodeDist.Node] = nodeDist.Cost
 }
