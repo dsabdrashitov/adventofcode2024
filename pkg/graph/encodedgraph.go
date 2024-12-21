@@ -30,3 +30,7 @@ func (eg *EncodedGraph[N, C]) Edges(nodeId int) []NodeCost[C] {
 	}
 	return result
 }
+
+func (eg *EncodedGraph[N, C]) NodeId(node N) int {
+	return eg.Encoder.Id(node)
+}
